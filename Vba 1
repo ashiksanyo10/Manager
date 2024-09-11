@@ -1,0 +1,58 @@
+Sub ViewScore()
+    Dim wsManager As Worksheet
+    Dim wsUser As Worksheet
+    Dim userID As String
+    Dim month As String
+    Dim cell As Range
+    Dim foundCell As Range
+    Dim score As Variant
+    Dim isManager As Boolean
+    Dim managerID As String
+    
+    ' Set worksheet references
+    Set wsManager = ThisWorkbook.Sheets("Sheet1")
+    Set wsUser = ThisWorkbook.Sheets("Sheet2")
+    
+    ' Define manager ID (you can use a specific manager ID or a logic to determine if the user is a manager)
+    managerID = "manager_id" ' Change this to a specific manager ID or your logic to determine if user is a manager
+    
+    ' Get user ID and month from the active row in Sheet2
+    userID = wsUser.Cells(ActiveCell.Row, 1).Value
+    month = wsUser.Cells(ActiveCell.Row, 2).Value
+    
+    ' Check if the user is the manager
+    isManager = (userID = managerID)
+    
+    ' If not a manager, restrict access to their own scores
+    If Not isManager Then
+        Set foundCell = Nothing
+        For Each cell In wsManager.Range("A:A")
+            If cell.Value = userID And cell.Offset(0, 1).Value = month Then
+                Set foundCell = cell
+                Exit For
+            End If
+        Next cell
+        
+        If Not foundCell Is Nothing Then
+            score = foundCell.Offset(0, 2).Value
+            MsgBox "Your score for " & month & " is " & score
+        Else
+            MsgBox "No score found for " & month
+        End If
+    Else
+        ' Manager can view all scores
+        Set foundCell = wsManager.Range("A:A").Find(What:=userID, LookIn:=xlValues, LookAt:=xlWhole)
+        
+        If Not foundCell Is Nothing Then
+            For Each cell In wsManager.Range("A:A")
+                If cell.Value = userID And cell.Offset(0, 1).Value = month Then
+                    score = cell.Offset(0, 2).Value
+                    MsgBox "Score for " & userID & " in " & month & " is " & score
+                    Exit For
+                End If
+            Next cell
+        Else
+            MsgBox "No score found for " & month
+        End If
+    End If
+End Sub
