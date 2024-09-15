@@ -1,58 +1,49 @@
-Sub ViewScore()
-    Dim wsManager As Worksheet
-    Dim wsUser As Worksheet
-    Dim userID As String
-    Dim month As String
-    Dim cell As Range
+Sub ProtectManagerSheet()
+    ' Protects the ManagerSheet with a password
+    Sheets("ManagerSheet").Protect Password:="ManagerPassword", UserInterfaceOnly:=True
+End Sub
+
+
+Sub ShowEmployeeScore()
+    Dim empName As String
+    Dim lastRow As Long
+    Dim scoreRange As Range
     Dim foundCell As Range
-    Dim score As Variant
-    Dim isManager As Boolean
-    Dim managerID As String
+    Dim i As Integer
     
-    ' Set worksheet references
-    Set wsManager = ThisWorkbook.Sheets("Sheet1")
-    Set wsUser = ThisWorkbook.Sheets("Sheet2")
+    ' Get the employee name from the active cell in EmployeeAccess sheet
+    empName = ActiveCell.Value
     
-    ' Define manager ID (you can use a specific manager ID or a logic to determine if the user is a manager)
-    managerID = "manager_id" ' Change this to a specific manager ID or your logic to determine if user is a manager
-    
-    ' Get user ID and month from the active row in Sheet2
-    userID = wsUser.Cells(ActiveCell.Row, 1).Value
-    month = wsUser.Cells(ActiveCell.Row, 2).Value
-    
-    ' Check if the user is the manager
-    isManager = (userID = managerID)
-    
-    ' If not a manager, restrict access to their own scores
-    If Not isManager Then
-        Set foundCell = Nothing
-        For Each cell In wsManager.Range("A:A")
-            If cell.Value = userID And cell.Offset(0, 1).Value = month Then
-                Set foundCell = cell
-                Exit For
-            End If
-        Next cell
+    ' Find the employee name in the ManagerSheet
+    With Sheets("ManagerSheet")
+        lastRow = .Cells(.Rows.Count, "A").End(xlUp).Row ' Get the last row
+        Set scoreRange = .Range("A2:A" & lastRow) ' Assumes names are in Column A
         
-        If Not foundCell Is Nothing Then
-            score = foundCell.Offset(0, 2).Value
-            MsgBox "Your score for " & month & " is " & score
-        Else
-            MsgBox "No score found for " & month
-        End If
-    Else
-        ' Manager can view all scores
-        Set foundCell = wsManager.Range("A:A").Find(What:=userID, LookIn:=xlValues, LookAt:=xlWhole)
+        Set foundCell = scoreRange.Find(empName, LookIn:=xlValues)
         
+        ' If employee is found
         If Not foundCell Is Nothing Then
-            For Each cell In wsManager.Range("A:A")
-                If cell.Value = userID And cell.Offset(0, 1).Value = month Then
-                    score = cell.Offset(0, 2).Value
-                    MsgBox "Score for " & userID & " in " & month & " is " & score
-                    Exit For
-                End If
-            Next cell
+            ' Copy the score from ManagerSheet and display in EmployeeScore sheet
+            For i = 2 To 13 ' Assuming months are from Column B to M (Jan to Dec)
+                Sheets("EmployeeScore").Cells(2, i - 1).Value = Sheets("ManagerSheet").Cells(foundCell.Row, i).Value
+            Next i
+            MsgBox "Your score is displayed in EmployeeScore sheet!"
         Else
-            MsgBox "No score found for " & month
+            MsgBox "Employee not found!"
         End If
-    End If
+    End With
+End Sub
+
+
+Sub ProtectEmployeeSheet()
+    Sheets("EmployeeScore").Protect Password:="EmployeePassword"
+End Sub
+
+Sub UnProtectEmployeeSheet()
+    Sheets("EmployeeScore").Unprotect Password:="EmployeePassword"
+End Sub
+
+
+Private Sub Workbook_Open()
+    ProtectManagerSheet
 End Sub
