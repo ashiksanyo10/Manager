@@ -1,0 +1,58 @@
+Sub ShowEmployeeScore()
+    ' Define the sheets
+    Dim managerSheet As Worksheet
+    Dim employeeSheet As Worksheet
+    Dim scoreSheet As Worksheet
+    Dim employeeName As String
+    Dim employeePassword As String
+    Dim employeeRow As Integer
+    Dim inputPassword As String
+    Dim lastMonthColumn As Integer
+    Dim i As Integer
+    
+    ' Set the worksheets
+    Set managerSheet = ThisWorkbook.Sheets("Manager Scores")
+    Set employeeSheet = ThisWorkbook.Sheets("Employee View")
+    Set scoreSheet = ThisWorkbook.Sheets("Score View")
+    
+    ' Get the employee name
+    employeeName = Application.InputBox("Please enter your name:", "Employee Authentication", Type:=2)
+    
+    ' Find the employee's row in the employee sheet
+    On Error Resume Next
+    employeeRow = WorksheetFunction.Match(employeeName, employeeSheet.Range("A:A"), 0)
+    On Error GoTo 0
+    
+    If employeeRow = 0 Then
+        MsgBox "Employee not found. Please check your name and try again.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Get the employee's password from the sheet
+    employeePassword = employeeSheet.Cells(employeeRow, 2).Value ' Password stored in column B
+    
+    ' Ask the employee for their password
+    inputPassword = Application.InputBox("Please enter your password:", "Employee Authentication", Type:=2)
+    
+    ' Check if the password is correct
+    If inputPassword <> employeePassword Then
+        MsgBox "Incorrect password. Access denied.", vbCritical
+        Exit Sub
+    End If
+    
+    ' Password is correct, fetch and show the scores
+    lastMonthColumn = managerSheet.Cells(1, Columns.Count).End(xlToLeft).Column
+    
+    ' Clear previous data in the score sheet
+    scoreSheet.Cells.Clear
+    
+    ' Display the employee's score in the Score View sheet
+    scoreSheet.Cells(1, 1).Value = "Scores for " & employeeName
+    For i = 2 To lastMonthColumn
+        scoreSheet.Cells(2, i - 1).Value = managerSheet.Cells(1, i).Value  ' Month names
+        scoreSheet.Cells(3, i - 1).Value = managerSheet.Cells(employeeRow, i).Value  ' Scores
+    Next i
+    
+    ' Activate the score view sheet
+    scoreSheet.Activate
+End Sub
